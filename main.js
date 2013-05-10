@@ -1,6 +1,6 @@
 var bot = require('./bot');
 bot.connect({
-  server: 'picon',
+  server: 'localhost',
   nick: 'blxbot',
   channels: ['#blxbot']
 });
