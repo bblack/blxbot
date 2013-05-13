@@ -1,18 +1,28 @@
+var Mustache = require('mustache');
+
 var handle;
-var desiredNick = 'bblack';
+var cancelVacationHandle;
+var desiredNick = 'blanket';
+var user = /^.+\!.+@blanket.users.whatnet.org$/i;
 
 var switchOn = function(client, chan) {
   if (handle) { 
-    client.say(chan, 'squat already on');
+    if (chan) {
+      client.say(chan, 'squat already on');
+    }
     return;
   }
   handle = setInterval(tryGrabNick, 3000, client);
-  client.say(chan, 'squat switched on');
+  if (chan) {
+    client.say(chan, 'squat switched on');
+  }
 }
 
 var switchOff = function(client, chan) {
   handle = clearInterval(handle);
-  client.say(chan, 'squat switched off');
+  if (chan) {
+    client.say(chan, 'squat switched off');
+  }
 }
 
 var tryGrabNick = function(client) {
@@ -32,15 +42,41 @@ var tryGrabNick = function(client) {
   });
 }
 
+var vacateNickBriefly = function(client, chan) {
+  if (cancelVacationHandle) {
+    // already in a vacate period
+    return;
+  }
+  var vacatePeriod = 15;
+  switchOff(client);
+  cancelVacationHandle = setTimeout(switchOn, vacatePeriod*1000, client);
+  client.send("NICK", client.opt.nick + (client.opt.nickMod || 0));
+
+  var announcement = Mustache.render("Vacating nick for {{vacatePeriod}} seconds.", {
+    vacatePeriod: vacatePeriod
+  });
+  client.say(chan, announcement);
+}
+
 exports.onConnected = function(client) {
+  switchOn(client);
   client.on('message', function(from, to, text, msg){
-    var words = text.split(/\s+/);
-    if (words[0] == '.squat') {
-      if (words[1] == 'on') {
-        switchOn(client, to);
-      } else if (words[1] == 'off') {
-        switchOff(client, to);
+    if (msg.prefix == user) {
+      var words = text.split(/\s+/);
+      if (words[0] == '.squat') {
+        if (words[1] == 'on') {
+          switchOn(client, to);
+        } else if (words[1] == 'off') {
+          switchOff(client, to);
+        }
       }
+    }
+  });
+  client.on('raw', function(msg){
+    // Would catch 'join', but irc.js doesn't include hostmask
+    // on the 'join' event
+    if (msg.command == 'JOIN' && msg.prefix.match(user)){
+      vacateNickBriefly(client, msg.args[0]);
     }
   });
   client.on('error', function(msg){
@@ -53,7 +89,7 @@ exports.onConnected = function(client) {
       // is an expected message for us sometimes. but in doing this,
       // we have to catch all error events, even the ones we don't care about.
       // so we'll report the ones we ate but didn't care about.
-      console.log('got an error: ' + JSON.stringify(args));
+      console.log('got an error: ' + JSON.stringify(msg.args));
     }
   });
 }
