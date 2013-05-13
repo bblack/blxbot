@@ -1,25 +1,25 @@
 var Mustache = require('mustache');
 
-var handle;
+var tryGrabNickHandle;
 var cancelVacationHandle;
 var desiredNick = 'blanket';
 var user = /^.+\!.+@blanket.users.whatnet.org$/i;
 
 var switchOn = function(client, chan) {
-  if (handle) { 
+  if (tryGrabNickHandle) { 
     if (chan) {
       client.say(chan, 'squat already on');
     }
     return;
   }
-  handle = setInterval(tryGrabNick, 3000, client);
+  tryGrabNickHandle = setInterval(tryGrabNick, 3000, client);
   if (chan) {
     client.say(chan, 'squat switched on');
   }
 }
 
 var switchOff = function(client, chan) {
-  handle = clearInterval(handle);
+  tryGrabNickHandle = clearInterval(tryGrabNickHandle);
   if (chan) {
     client.say(chan, 'squat switched off');
   }
