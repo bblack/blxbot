@@ -14,7 +14,7 @@ exports.onConnected = function(client) {
             client.say(to, "Error. Try one of: ari atl bal bos chc cin cle col cws det hou kc laa lad mia mil min nym nyy oak phi pit sd sea sf stl tb tex tor wsh");
           } else {
             var $ = cheerio.load(body);
-            var answer = $('#scoreboard_module .games').slice(0, 1).text().replace(/\s+/g, ' ');
+            var answer = $('#scoreboard_module .games').slice(-1).text().replace(/\s+/g, ' ');
             client.say(to, answer);
           }
         }).on('error', function(){
