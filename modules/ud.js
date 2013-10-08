@@ -10,25 +10,25 @@ exports.onConnected = function(client) {
       var req = http.request(url, function(res){
         var body = '';
         res.on('data', function(data){
-          body += data.toString();
+          body += data;
         }).on('end', function(){
           if (res.statusCode != '200') {
             client.say(to, "Error. Received " + res.statusCode);
           } else {
-            var $ = cheerio.load(body);
-            var table_entries = $('table#entries');
-            if (table_entries.length == 0) {
-              client.say(to, "Couldn't find a definition for " + term);
-            } else {
-              var def_word = $('table#entries td.word span').slice(0, 1).text().replace(/\n/g, '');
-              var def = $('table#entries div.definition').slice(0, 1).text().replace(/\s+/g, ' ');
+            try {
+              var $ = cheerio.load(body);
+              var def_word = $('#entries .word span').slice(0,1).text().replace(/\n/g, '');
+              var def = $('#entries .text .definition').slice(0,1).text().replace(/\s+/g, ' ');
               def = def.slice(0, 300);
               client.say(to, def_word + ": " + def);
+            } catch (ex) {
+              client.say(to, "couldn't get definition for " + term);
             }
           }
-        }).on('error', function(){
-          client.say(to, 'errored');
         });
+      });
+      req.on('error', function(err){
+          client.say(to, 'errored: ' + err);
       });
       req.end();
     }
